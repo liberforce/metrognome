@@ -5,6 +5,7 @@ typedef struct
 {
 	GtkWidget *window;
 	GtkWidget *da;
+	GtkWidget *grid;
 	int counter;
 } Gui;
 
@@ -67,9 +68,18 @@ int main (int argc, char **argv)
 	guchar bpm = 60;
 	gtk_init (&argc, &argv);
 
+	// Create widgets
 	gui->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	gui->grid = gtk_grid_new ();
 	gui->da = gtk_drawing_area_new ();
-	gtk_container_add (GTK_CONTAINER (gui->window), gui->da);
+
+	// Build widget tree
+	gtk_container_add (GTK_CONTAINER (gui->window), gui->grid);
+	gtk_grid_attach (GTK_GRID (gui->grid), gui->da, 0, 0, 1, 1);
+	gtk_widget_set_hexpand (gui->da, TRUE);
+	gtk_widget_set_vexpand (gui->da, TRUE);
+
+	// Show UI and connect signals
 	gtk_widget_show_all (gui->window);
 	g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
 	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), gui);
