@@ -68,7 +68,10 @@ on_timeout (gpointer user_data)
 	gui->counter %= 4;
 	gtk_widget_queue_draw (widget);
 	g_print ("%d\n", gui->counter);
-	return TRUE;
+
+	// Prepare next metronome click
+	gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
+	return FALSE;
 }
 
 void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user_data)
