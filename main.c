@@ -89,6 +89,12 @@ void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user
 
 }
 
+void on_bpm_spin_value_changed (GtkSpinButton *spin, gpointer user_data)
+{
+	Gui *gui = user_data;
+	gui->bpm = gtk_spin_button_get_value_as_int (spin);
+}
+
 int main (int argc, char **argv)
 {
 	Gui *gui = g_new0 (Gui, 1);
@@ -115,11 +121,15 @@ int main (int argc, char **argv)
 	gtk_widget_set_hexpand (gui->da, TRUE);
 	gtk_widget_set_vexpand (gui->da, TRUE);
 
+	// Initialize widget content
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (gui->bpm_spin), gui->bpm);
+	
 	// Show UI and connect signals
 	gtk_widget_show_all (gui->window);
 	g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
 	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), gui);
 	g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), gui);
+	g_signal_connect (gui->bpm_spin, "value-changed", G_CALLBACK (on_bpm_spin_value_changed), gui);
 
 	gtk_main ();
 	return 0;
