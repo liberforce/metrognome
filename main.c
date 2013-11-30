@@ -78,7 +78,8 @@ void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user
 	// FIXME: make button insensitive instead of checking bpm
 	if (gui->timeout_source == 0 && gui->bpm > 0)
 	{
-		gui->counter = -1;
+		gui->counter = 0;
+		gtk_widget_queue_draw (gui->da);
 		gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
 	}
 	else if (gui->timeout_source != 0)
