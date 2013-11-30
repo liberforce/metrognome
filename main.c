@@ -31,13 +31,13 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 	cairo_text_extents (cr, text, &extents);
 
 	double x = gtk_widget_get_allocated_width (widget)/2 - (extents.width/2 + extents.x_bearing);
-	double y = gtk_widget_get_allocated_height (widget)/2 - (extents.height/2 + extents.y_bearing);
+	double y = gtk_widget_get_allocated_height (widget)/2 + extents.height/2;
 
 	// draw a bounding box
 	cairo_move_to (cr, x, y);
 	cairo_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
 	cairo_set_line_width (cr, 6.0);
-	cairo_rectangle (cr, x, y - extents.height, extents.width + extents.x_bearing, extents.height);
+	cairo_rectangle (cr, x + extents.x_bearing, y + extents.y_bearing, extents.width, extents.height);
 	cairo_stroke (cr);
 
 	// draw text
