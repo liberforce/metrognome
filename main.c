@@ -7,7 +7,7 @@ typedef struct
 	GtkWidget *da;
 	GtkWidget *grid;
 	GtkWidget *bpm_label;
-	GtkWidget *bpm_entry;
+	GtkWidget *bpm_spin;
 	GtkWidget *play_stop_button;;
 	int counter;
 	int bpm;
@@ -102,13 +102,13 @@ int main (int argc, char **argv)
 	gui->grid = gtk_grid_new ();
 	gui->da = gtk_drawing_area_new ();
 	gui->bpm_label = gtk_label_new ("BPM:");
-	gui->bpm_entry = gtk_entry_new ();
+	gui->bpm_spin = gtk_spin_button_new_with_range (1.0, 300.0, 1.0);
 	gui->play_stop_button = gtk_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
 
 	// Build widget tree
 	gtk_container_add (GTK_CONTAINER (gui->window), gui->grid);
 	gtk_grid_attach (GTK_GRID (gui->grid), gui->bpm_label, 0, 0, 1, 1);
-	gtk_grid_attach (GTK_GRID (gui->grid), gui->bpm_entry, 1, 0, 1, 1);
+	gtk_grid_attach (GTK_GRID (gui->grid), gui->bpm_spin, 1, 0, 1, 1);
 	gtk_grid_attach (GTK_GRID (gui->grid), gui->play_stop_button, 0, 1, 1, 1);
 	gtk_button_set_always_show_image (GTK_BUTTON (gui->play_stop_button), TRUE);
 	gtk_grid_attach (GTK_GRID (gui->grid), gui->da, 2, 0, 1, 2);
