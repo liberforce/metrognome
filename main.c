@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <math.h>
 
 typedef struct
 {
@@ -17,14 +18,31 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 		gpointer user_data)
 {
 	Gui *gui = user_data;
-	char text[2];
+	char text[5];
 	cairo_select_font_face (cr,
 			"Sans",
 			CAIRO_FONT_SLANT_NORMAL,
 			CAIRO_FONT_WEIGHT_BOLD);
-	cairo_set_font_size (cr, 120.0);
-	cairo_move_to (cr, 10.0, 135.0);
+
 	g_snprintf (text, sizeof (text), "%d", gui->counter + 1);
+
+	cairo_set_font_size (cr, gtk_widget_get_allocated_height (widget));
+	cairo_text_extents_t extents;
+	cairo_text_extents (cr, text, &extents);
+
+	double x = gtk_widget_get_allocated_width (widget)/2 - (extents.width/2 + extents.x_bearing);
+	double y = gtk_widget_get_allocated_height (widget)/2 - (extents.height/2 + extents.y_bearing);
+
+	// draw a bounding box
+	cairo_move_to (cr, x, y);
+	cairo_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
+	cairo_set_line_width (cr, 6.0);
+	cairo_rectangle (cr, x, y - extents.height, extents.width + extents.x_bearing, extents.height);
+	cairo_stroke (cr);
+
+	// draw text
+	cairo_move_to (cr, x, y);
+	cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
 	cairo_show_text (cr, text);
 	return TRUE;
 }
