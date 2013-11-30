@@ -10,6 +10,8 @@ typedef struct
 	GtkWidget *bpm_entry;
 	GtkWidget *play_stop_button;;
 	int counter;
+	int bpm;
+	guint timeout_source;
 } Gui;
 
 void on_destroy (G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer user_data)
@@ -23,6 +25,10 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 {
 	Gui *gui = user_data;
 	char text[5];
+
+	if (gui->counter == -1)
+		return TRUE;
+
 	cairo_select_font_face (cr,
 			"Sans",
 			CAIRO_FONT_SLANT_NORMAL,
@@ -65,10 +71,30 @@ on_timeout (gpointer user_data)
 	return TRUE;
 }
 
+void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user_data)
+{
+	Gui *gui = user_data;
+
+	// FIXME: make button insensitive instead of checking bpm
+	if (gui->timeout_source == 0 && gui->bpm > 0)
+	{
+		gui->counter = -1;
+		gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
+	}
+	else if (gui->timeout_source != 0)
+	{
+		g_source_remove (gui->timeout_source);
+		gui->timeout_source = 0;
+	}
+
+}
+
 int main (int argc, char **argv)
 {
 	Gui *gui = g_new0 (Gui, 1);
-	guchar bpm = 60;
+	gui->bpm = 60;
+	gui->counter = -1;
+
 	gtk_init (&argc, &argv);
 
 	// Create widgets
@@ -93,8 +119,8 @@ int main (int argc, char **argv)
 	gtk_widget_show_all (gui->window);
 	g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
 	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), gui);
+	g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), gui);
 
-	g_timeout_add (60000/bpm, on_timeout, gui);
 	gtk_main ();
 	return 0;
 }
