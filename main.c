@@ -130,6 +130,7 @@ int main (int argc, char **argv)
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (gui->bpm_spin), gui->bpm);
 	
 	// Show UI and connect signals
+	gtk_window_set_default_size (GTK_WINDOW (gui->window), 600, 400);
 	gtk_widget_show_all (gui->window);
 	g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
 	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), gui);
