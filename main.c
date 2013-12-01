@@ -26,6 +26,7 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 	Gui *gui = user_data;
 	char text[5];
 
+	// clear screen when we're not counting
 	if (gui->counter == -1)
 		return TRUE;
 
@@ -88,6 +89,8 @@ void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user
 	{
 		g_source_remove (gui->timeout_source);
 		gui->timeout_source = 0;
+		gui->counter = -1;
+		gtk_widget_queue_draw (gui->da);
 	}
 }
 
