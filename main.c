@@ -98,6 +98,13 @@ void on_bpm_spin_value_changed (GtkSpinButton *spin, gpointer user_data)
 {
 	Gui *gui = user_data;
 	gui->bpm = gtk_spin_button_get_value_as_int (spin);
+
+	if (gui->timeout_source != 0)
+	{
+		// reset the source if it's already runnin, using the new bpm
+		g_source_remove (gui->timeout_source);
+		gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
+	}
 }
 
 int main (int argc, char **argv)
