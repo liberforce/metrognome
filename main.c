@@ -11,6 +11,8 @@ typedef struct
 	GtkWidget *play_stop_button;;
 	int counter;
 	int bpm;
+	GTimer *timer;
+	gdouble next_beat; // in seconds
 	guint timeout_source;
 } Gui;
 
@@ -70,7 +72,16 @@ on_timeout (gpointer user_data)
 	gtk_widget_queue_draw (widget);
 
 	// Prepare next metronome click
-	gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
+	gdouble now = g_timer_elapsed (gui->timer, NULL);
+	gdouble delta = now - gui->next_beat;
+
+	// g_timeout_add uses time in milliseconds
+	// g_timer_elapsed and next_beat are in seconds
+	gui->timeout_source = g_timeout_add (60000/gui->bpm - (delta * 1000), on_timeout, gui);
+	gui->next_beat += 60.0/gui->bpm;
+
+	// Prevent this timeout source from running again
+	// (we run a new one at each beat)
 	return FALSE;
 }
 
@@ -84,6 +95,8 @@ void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user
 		gui->counter = 0;
 		gtk_widget_queue_draw (gui->da);
 		gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
+		g_timer_start (gui->timer);
+		gui->next_beat += 60.0/gui->bpm;
 	}
 	else if (gui->timeout_source != 0)
 	{
@@ -91,6 +104,7 @@ void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user
 		gui->timeout_source = 0;
 		gui->counter = -1;
 		gtk_widget_queue_draw (gui->da);
+		g_timer_stop (gui->timer);
 	}
 }
 
@@ -143,6 +157,7 @@ int main (int argc, char **argv)
 	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), gui);
 	g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), gui);
 	g_signal_connect (gui->bpm_spin, "value-changed", G_CALLBACK (on_bpm_spin_value_changed), gui);
+	gui->timer = g_timer_new ();
 
 	gtk_main ();
 	return 0;
