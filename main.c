@@ -135,7 +135,7 @@ int main (int argc, char **argv)
 	gui->da = gtk_drawing_area_new ();
 	gui->bpm_label = gtk_label_new ("BPM:");
 	gui->bpm_spin = gtk_spin_button_new_with_range (1.0, 300.0, 1.0);
-	gui->play_stop_button = gtk_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
+	gui->play_stop_button = gtk_button_new_from_icon_name ("media-playback-start", GTK_ICON_SIZE_BUTTON);
 
 	// Build widget tree
 	gtk_container_add (GTK_CONTAINER (gui->window), gui->grid);
