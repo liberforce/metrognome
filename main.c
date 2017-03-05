@@ -12,7 +12,7 @@ typedef struct
 	int counter;
 	int bpm;
 	GTimer *timer;
-	gdouble next_beat; // in seconds
+	gdouble next_beat_at; // in seconds
 	guint timeout_source;
 } Gui;
 
@@ -32,12 +32,12 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 	if (gui->counter == -1)
 		return TRUE;
 
+	g_snprintf (text, sizeof (text), "%d", gui->counter + 1);
+
 	cairo_select_font_face (cr,
 			"Sans",
 			CAIRO_FONT_SLANT_NORMAL,
 			CAIRO_FONT_WEIGHT_BOLD);
-
-	g_snprintf (text, sizeof (text), "%d", gui->counter + 1);
 
 	cairo_set_font_size (cr, gtk_widget_get_allocated_height (widget));
 	cairo_text_extents_t extents;
@@ -67,18 +67,20 @@ on_timeout (gpointer user_data)
 {
 	Gui *gui = user_data;
 	GtkWidget *widget = gui->da;
+
+	// Display this click
+	gtk_widget_queue_draw (widget);
 	gui->counter++;
 	gui->counter %= 4;
-	gtk_widget_queue_draw (widget);
 
 	// Prepare next metronome click
+	// Now and next_beat_at are absolute timings in seconds since timer was started
 	gdouble now = g_timer_elapsed (gui->timer, NULL);
-	gdouble delta = now - gui->next_beat;
+	guint period_in_msec = 60000/gui->bpm;
+	gui->next_beat_at += ((gdouble)period_in_msec) / 1000;
 
 	// g_timeout_add uses time in milliseconds
-	// g_timer_elapsed and next_beat are in seconds
-	gui->timeout_source = g_timeout_add (60000/gui->bpm - (delta * 1000), on_timeout, gui);
-	gui->next_beat += 60.0/gui->bpm;
+	gui->timeout_source = g_timeout_add ((gui->next_beat_at - now) * 1000, on_timeout, gui);
 
 	// Prevent this timeout source from running again
 	// (we run a new one at each beat)
@@ -89,20 +91,21 @@ void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user
 {
 	Gui *gui = user_data;
 
-	// FIXME: make button insensitive instead of checking bpm
-	if (gui->timeout_source == 0 && gui->bpm > 0)
+	g_assert (gui->bpm > 0);
+
+	gui->counter = -1;
+
+	if (gui->timeout_source == 0)
 	{
-		gui->counter = 0;
-		gtk_widget_queue_draw (gui->da);
-		gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
+		guint initial_delay_in_msec = 500;
+		gui->timeout_source = g_timeout_add (initial_delay_in_msec, on_timeout, gui);
+		gui->next_beat_at = ((gdouble)initial_delay_in_msec) / 1000;
 		g_timer_start (gui->timer);
-		gui->next_beat = 60.0/gui->bpm;
 	}
-	else if (gui->timeout_source != 0)
+	else
 	{
 		g_source_remove (gui->timeout_source);
 		gui->timeout_source = 0;
-		gui->counter = -1;
 		gtk_widget_queue_draw (gui->da);
 		g_timer_stop (gui->timer);
 	}
