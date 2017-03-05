@@ -118,9 +118,12 @@ void on_bpm_spin_value_changed (GtkSpinButton *spin, gpointer user_data)
 
 	if (gui->timeout_source != 0)
 	{
-		// reset the source if it's already runnin, using the new bpm
+		// reset the source if it's already running, using the new bpm
 		g_source_remove (gui->timeout_source);
-		gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
+		guint period_in_msec = 60000/gui->bpm;
+		gui->timeout_source = g_timeout_add (period_in_msec, on_timeout, gui);
+		gui->next_beat_at = ((gdouble)period_in_msec) / 1000;
+		g_timer_start (gui->timer);
 	}
 }
 
