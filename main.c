@@ -96,7 +96,7 @@ void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user
 		gtk_widget_queue_draw (gui->da);
 		gui->timeout_source = g_timeout_add (60000/gui->bpm, on_timeout, gui);
 		g_timer_start (gui->timer);
-		gui->next_beat += 60.0/gui->bpm;
+		gui->next_beat = 60.0/gui->bpm;
 	}
 	else if (gui->timeout_source != 0)
 	{
