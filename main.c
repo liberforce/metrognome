@@ -9,12 +9,76 @@ typedef struct
 	GtkWidget *bpm_label;
 	GtkWidget *bpm_spin;
 	GtkWidget *play_stop_button;
-	int counter;
-	int bpm;
-	GTimer *timer;
-	gdouble next_beat_at; // in seconds
 	guint timeout_source;
-} Gui;
+} MetronomeGui;
+
+typedef struct metronome
+{
+	int counter;
+	guint bpm;
+	gdouble next_beat_at; // in seconds
+	GTimer *timer;
+} Metronome;
+
+typedef struct metronome_app
+{
+	MetronomeGui *gui;
+	Metronome *metro;
+} MetronomeApp;
+
+Metronome *
+metronome_new (void)
+{
+	Metronome * metro = g_new0(Metronome, 1);
+	metro->counter = -1;
+	metro->bpm = 60;
+	metro->timer = g_timer_new();
+	return metro;
+}
+
+void
+metronome_set_bpm (Metronome *metro, guint bpm)
+{
+	g_assert (metro != NULL);
+	metro->bpm = CLAMP(bpm, 40, 300);
+}
+
+guint
+metronome_get_next_beat (Metronome *metro)
+{
+	g_assert (metro != NULL);
+
+	// Now and next_beat_at are absolute timings in seconds since timer
+	// was started
+	gdouble now = g_timer_elapsed (metro->timer, NULL);
+	guint period_in_msec = 60000/metro->bpm;
+	metro->next_beat_at += ((gdouble)period_in_msec) / 1000;
+	return (metro->next_beat_at - now) * 1000;
+}
+
+void
+metronome_start (Metronome *metro)
+{
+	g_assert (metro != NULL);
+	g_timer_start (metro->timer);
+}
+
+void
+metronome_stop (Metronome *metro)
+{
+	g_assert (metro != NULL);
+	g_timer_stop (metro->timer);
+}
+
+void
+metronome_free (Metronome *metro)
+{
+	if (metro != NULL)
+	{
+		g_timer_destroy (metro->timer);
+		g_free (metro);
+	}
+}
 
 void on_destroy (G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer user_data)
 {
@@ -25,14 +89,14 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 		cairo_t *cr,
 		gpointer user_data)
 {
-	Gui *gui = user_data;
+	MetronomeApp *app = user_data;
 	char text[5];
 
 	// clear screen when we're not counting
-	if (gui->counter == -1)
+	if (app->metro->counter == -1)
 		return TRUE;
 
-	g_snprintf (text, sizeof (text), "%d", gui->counter + 1);
+	g_snprintf (text, sizeof (text), "%d", app->metro->counter + 1);
 
 	cairo_select_font_face (cr,
 			"Sans",
@@ -65,22 +129,19 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 gboolean
 on_timeout (gpointer user_data)
 {
-	Gui *gui = user_data;
-	GtkWidget *widget = gui->da;
+	MetronomeApp *app = user_data;
+	MetronomeGui *gui = app->gui;
 
 	// Display this click
-	gtk_widget_queue_draw (widget);
-	gui->counter++;
-	gui->counter %= 4;
-
-	// Prepare next metronome click
-	// Now and next_beat_at are absolute timings in seconds since timer was started
-	gdouble now = g_timer_elapsed (gui->timer, NULL);
-	guint period_in_msec = 60000/gui->bpm;
-	gui->next_beat_at += ((gdouble)period_in_msec) / 1000;
+	gtk_widget_queue_draw (gui->da);
+	app->metro->counter++;
+	app->metro->counter %= 4;
 
 	// g_timeout_add uses time in milliseconds
-	gui->timeout_source = g_timeout_add ((gui->next_beat_at - now) * 1000, on_timeout, gui);
+	gui->timeout_source = g_timeout_add (
+			metronome_get_next_beat (app->metro),
+			on_timeout,
+			app);
 
 	// Prevent this timeout source from running again
 	// (we run a new one at each beat)
@@ -89,49 +150,52 @@ on_timeout (gpointer user_data)
 
 void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user_data)
 {
-	Gui *gui = user_data;
+	MetronomeApp *app = user_data;
+	MetronomeGui *gui = app->gui;
 
-	g_assert (gui->bpm > 0);
+	g_assert (app->metro->bpm > 0);
 
-	gui->counter = -1;
+	app->metro->counter = -1;
 
 	if (gui->timeout_source == 0)
 	{
 		guint initial_delay_in_msec = 500;
-		gui->timeout_source = g_timeout_add (initial_delay_in_msec, on_timeout, gui);
-		gui->next_beat_at = ((gdouble)initial_delay_in_msec) / 1000;
-		g_timer_start (gui->timer);
+		gui->timeout_source = g_timeout_add (initial_delay_in_msec, on_timeout, app);
+		app->metro->next_beat_at = ((gdouble)initial_delay_in_msec) / 1000;
+		metronome_start (app->metro);
 	}
 	else
 	{
 		g_source_remove (gui->timeout_source);
 		gui->timeout_source = 0;
 		gtk_widget_queue_draw (gui->da);
-		g_timer_stop (gui->timer);
+		metronome_stop (app->metro);
 	}
 }
 
 void on_bpm_spin_value_changed (GtkSpinButton *spin, gpointer user_data)
 {
-	Gui *gui = user_data;
-	gui->bpm = gtk_spin_button_get_value_as_int (spin);
+	MetronomeApp *app = user_data;
+	MetronomeGui *gui = app->gui;
+	app->metro->bpm = gtk_spin_button_get_value_as_int (spin);
 
 	if (gui->timeout_source != 0)
 	{
 		// reset the source if it's already running, using the new bpm
 		g_source_remove (gui->timeout_source);
-		guint period_in_msec = 60000/gui->bpm;
-		gui->timeout_source = g_timeout_add (period_in_msec, on_timeout, gui);
-		gui->next_beat_at = ((gdouble)period_in_msec) / 1000;
-		g_timer_start (gui->timer);
+		guint period_in_msec = 60000/app->metro->bpm;
+		gui->timeout_source = g_timeout_add (period_in_msec, on_timeout, app);
+		app->metro->next_beat_at = ((gdouble)period_in_msec) / 1000;
+		metronome_start (app->metro);
 	}
 }
 
 int main (int argc, char **argv)
 {
-	Gui *gui = g_new0 (Gui, 1);
-	gui->bpm = 60;
-	gui->counter = -1;
+	MetronomeApp *app = g_new0 (MetronomeApp, 1);
+	MetronomeGui *gui = g_new0 (MetronomeGui, 1);
+	app->metro = metronome_new ();
+	app->gui = gui;
 
 	gtk_init (&argc, &argv);
 
@@ -160,16 +224,15 @@ int main (int argc, char **argv)
 	gtk_widget_set_vexpand (gui->da, TRUE);
 
 	// Initialize widget content
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (gui->bpm_spin), gui->bpm);
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (gui->bpm_spin), app->metro->bpm);
 	
 	// Show UI and connect signals
 	gtk_window_set_default_size (GTK_WINDOW (gui->window), 600, 400);
 	gtk_widget_show_all (gui->window);
 	g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
-	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), gui);
-	g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), gui);
-	g_signal_connect (gui->bpm_spin, "value-changed", G_CALLBACK (on_bpm_spin_value_changed), gui);
-	gui->timer = g_timer_new ();
+	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), app);
+	g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), app);
+	g_signal_connect (gui->bpm_spin, "value-changed", G_CALLBACK (on_bpm_spin_value_changed), app);
 
 	gtk_main ();
 	return 0;
