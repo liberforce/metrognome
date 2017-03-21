@@ -69,11 +69,11 @@ void
 on_click (gpointer user_data)
 {
 	MetronomeApp *app = user_data;
-	MetronomeGui *gui = app->gui;
+	//MetronomeGui *gui = app->gui;
 
 	// Display this click
-	printf("%d", metronome_get_counter (app->metro));
-	gtk_widget_queue_draw (gui->da);
+	g_debug ("%d", metronome_get_counter (app->metro));
+	//gtk_widget_queue_draw (gui->da);
 }
 
 void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user_data)
@@ -149,6 +149,7 @@ int main (int argc, char **argv)
 	app->gui = gui;
 
 	gtk_init (&argc, &argv);
+	metronome_start (app->metro, on_click, app);
 	gtk_main ();
 	return 0;
 }

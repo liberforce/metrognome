@@ -82,8 +82,15 @@ on_timeout (gpointer user_data)
 {
 	Metronome *metro = user_data;
 	metronome_incr_counter(metro);
+
 	// Call calback that does the actions in reaction to the metronome tick
 	(*metro->on_click)(metro->on_click_user_data);
+
+	// Wake up on next metronome tick
+	metro->timeout_source = g_timeout_add (
+			metronome_get_next_beat (metro),
+			on_timeout,
+			metro);
 
 	// Prevent this timeout source from running again
 	// (we run a new one at each beat)
