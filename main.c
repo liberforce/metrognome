@@ -72,6 +72,7 @@ on_click (gpointer user_data)
 	MetronomeGui *gui = app->gui;
 
 	// Display this click
+	printf("%d", metronome_get_counter (app->metro));
 	gtk_widget_queue_draw (gui->da);
 }
 
@@ -95,14 +96,11 @@ void on_bpm_spin_value_changed (GtkSpinButton *spin, gpointer user_data)
 	metronome_set_bpm (app->metro, gtk_spin_button_get_value_as_int (spin));
 }
 
-int main (int argc, char **argv)
+MetronomeGui *
+create_gui (void)
 {
-	MetronomeApp *app = g_new0 (MetronomeApp, 1);
+#if 0
 	MetronomeGui *gui = g_new0 (MetronomeGui, 1);
-	app->metro = metronome_new ();
-	app->gui = gui;
-
-	gtk_init (&argc, &argv);
 
 	// Create widgets
 	gui->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -138,7 +136,19 @@ int main (int argc, char **argv)
 	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), app);
 	g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), app);
 	g_signal_connect (gui->bpm_spin, "value-changed", G_CALLBACK (on_bpm_spin_value_changed), app);
+#else
+	return NULL;
+#endif
+}
 
+int main (int argc, char **argv)
+{
+	MetronomeApp *app = g_new0 (MetronomeApp, 1);
+	MetronomeGui *gui = create_gui ();
+	app->metro = metronome_new ();
+	app->gui = gui;
+
+	gtk_init (&argc, &argv);
 	gtk_main ();
 	return 0;
 }
