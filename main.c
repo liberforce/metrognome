@@ -145,8 +145,6 @@ int main (int argc, char **argv)
 	MetronomeGui *gui = create_gui (app->metro);
 	app->gui = gui;
 
-	metronome_start (app->metro, on_click, app);
-
 	if (gui != NULL)
 	{
 		g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
