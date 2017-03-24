@@ -81,12 +81,12 @@ static gboolean
 on_timeout (gpointer user_data)
 {
 	Metronome *metro = user_data;
-	metronome_incr_counter(metro);
 
-	// Call calback that does the actions in reaction to the metronome tick
+	// Handle this metronome tick
+	metronome_incr_counter(metro);
 	(*metro->on_click)(metro->on_click_user_data);
 
-	// Wake up on next metronome tick
+	// Prepare next metronome tick
 	metro->timeout_source = g_timeout_add (
 			metronome_get_next_beat (metro),
 			on_timeout,
@@ -103,7 +103,7 @@ metronome_start (Metronome *metro, ClickCallback callback, gpointer user_data)
 	g_assert (metro != NULL);
 
 	g_timer_start (metro->timer);
-	guint initial_delay_in_msec = 500;
+	guint initial_delay_in_msec = 100;
 	metro->next_beat_at = ((gdouble)initial_delay_in_msec) / 1000;
 	metro->on_click = callback;
 	metro->on_click_user_data = user_data;
@@ -119,6 +119,8 @@ metronome_stop (Metronome *metro)
 	metronome_reset_counter (metro);
 	g_source_remove (metro->timeout_source);
 	metro->timeout_source = 0;
+	// Add a last redraw to clean up the screen
+	(*metro->on_click)(metro->on_click_user_data);
 }
 
 void

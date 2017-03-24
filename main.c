@@ -72,7 +72,7 @@ on_click (gpointer user_data)
 	MetronomeGui *gui = app->gui;
 
 	// Display this click
-	g_debug ("%d", metronome_get_counter (app->metro));
+	g_print ("%d\n", metronome_get_counter (app->metro));
 	gtk_widget_queue_draw (gui->da);
 }
 
