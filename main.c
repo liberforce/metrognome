@@ -24,18 +24,23 @@ void on_destroy (G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer user_da
 	gtk_main_quit ();
 }
 
-gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
-		cairo_t *cr,
-		gpointer user_data)
+void
+draw_counter_trace (G_GNUC_UNUSED GtkWidget *widget,
+		G_GNUC_UNUSED cairo_t *cr,
+		int counter)
 {
-	Metronome *metro = user_data;
 	char text[5];
+	g_snprintf (text, sizeof (text), "%d", counter);
+	g_print ("%s\n", text);
+}
 
-	// clear screen when we're not counting
-	if (metronome_get_counter(metro) == 0)
-		return TRUE;
-
-	g_snprintf (text, sizeof (text), "%d", metronome_get_counter(metro));
+void
+draw_counter_numeric (GtkWidget *widget,
+		cairo_t *cr,
+		int counter)
+{
+	char text[5];
+	g_snprintf (text, sizeof (text), "%d", counter);
 
 	cairo_select_font_face (cr,
 			"Sans",
@@ -46,8 +51,8 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 	cairo_text_extents_t extents;
 	cairo_text_extents (cr, text, &extents);
 
-	double x = gtk_widget_get_allocated_width (widget)/2 - (extents.width/2 + extents.x_bearing);
-	double y = gtk_widget_get_allocated_height (widget)/2 + extents.height/2;
+	double x = gtk_widget_get_allocated_width (widget) / 2;
+	double y = gtk_widget_get_allocated_height (widget) / 2;
 
 #if 0
 	// draw a bounding box
@@ -62,6 +67,54 @@ gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
 	cairo_move_to (cr, x, y);
 	cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
 	cairo_show_text (cr, text);
+}
+
+void
+draw_counter_circle (GtkWidget *widget,
+		cairo_t *cr,
+		int counter)
+{
+	static const int n_times = 4;
+	double x[n_times];
+	x[0] = (gtk_widget_get_allocated_width (widget) * 1) / (n_times + 1);
+	x[1] = (gtk_widget_get_allocated_width (widget) * 2) / (n_times + 1);
+	x[2] = (gtk_widget_get_allocated_width (widget) * 3) / (n_times + 1);
+	x[3] = (gtk_widget_get_allocated_width (widget) * 4) / (n_times + 1);
+
+	double y = gtk_widget_get_allocated_height (widget) / 2;
+
+	int i;
+	for (i = 0; i < n_times; i++)
+	{
+		if (counter == (i + 1))
+			cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+		else
+			cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+
+		cairo_arc (cr,
+				x[i],
+				y,
+				gtk_widget_get_allocated_width (widget) / (2 * (n_times + 1)),
+				0.,
+				2 * M_PI);
+		cairo_fill (cr);
+	}
+}
+
+gboolean on_draw (G_GNUC_UNUSED GtkWidget *widget,
+		cairo_t *cr,
+		gpointer user_data)
+{
+	Metronome *metro = user_data;
+
+	int counter = metronome_get_counter(metro);
+
+	// clear screen when we're not counting
+	if (counter == 0)
+		return TRUE;
+
+	draw_counter_circle (widget, cr, counter);
+
 	return TRUE;
 }
 

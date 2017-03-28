@@ -68,6 +68,7 @@ metronome_reset_counter (Metronome *metro)
 {
 	g_assert (metro != NULL);
 	metro->counter = -1;
+	g_print ("%s\n", "reset");
 }
 void
 
@@ -103,6 +104,7 @@ metronome_start (Metronome *metro, ClickCallback callback, gpointer user_data)
 	g_assert (metro != NULL);
 
 	g_timer_start (metro->timer);
+	g_print ("%s\n", "start");
 	guint initial_delay_in_msec = 100;
 	metro->next_beat_at = ((gdouble)initial_delay_in_msec) / 1000;
 	metro->on_click = callback;
