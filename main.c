@@ -76,14 +76,19 @@ draw_counter_circle (GtkWidget *widget,
 {
 	static const int n_times = 4;
 	double x[n_times];
-	x[0] = (gtk_widget_get_allocated_width (widget) * 1) / (n_times + 1);
-	x[1] = (gtk_widget_get_allocated_width (widget) * 2) / (n_times + 1);
-	x[2] = (gtk_widget_get_allocated_width (widget) * 3) / (n_times + 1);
-	x[3] = (gtk_widget_get_allocated_width (widget) * 4) / (n_times + 1);
-
-	double y = gtk_widget_get_allocated_height (widget) / 2;
-
+	int width = gtk_widget_get_allocated_width (widget);
+	int height = gtk_widget_get_allocated_height (widget);
 	int i;
+
+	// Compute coordinates of the circle centers
+	for (i = 0; i < n_times; i++)
+	{
+		x[i] = (width * (i + 1)) / (n_times + 1);
+	}
+
+	double y = height / 2;
+
+	// Draw the circles
 	for (i = 0; i < n_times; i++)
 	{
 		if (counter == (i + 1))
@@ -94,8 +99,8 @@ draw_counter_circle (GtkWidget *widget,
 		cairo_arc (cr,
 				x[i],
 				y,
-				gtk_widget_get_allocated_width (widget) / (2 * (n_times + 1)),
-				0.,
+				width * 0.9 / (2 * (n_times + 1)),
+				0.0,
 				2 * M_PI);
 		cairo_fill (cr);
 	}
