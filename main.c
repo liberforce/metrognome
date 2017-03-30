@@ -74,6 +74,7 @@ draw_counter_circle (GtkWidget *widget,
 		cairo_t *cr,
 		int counter)
 {
+	char text[5];
 	static const int n_times = 4;
 	double x[n_times];
 	int width = gtk_widget_get_allocated_width (widget);
@@ -87,11 +88,21 @@ draw_counter_circle (GtkWidget *widget,
 	}
 
 	double y = height / 2;
+	double scaled_diameter = (width * 0.9) / (n_times + 1);
+	double scaled_radius = scaled_diameter / 2;
 
-	// Draw the circles
+	// Prepare drawing the numbers
+	cairo_set_font_size (cr, scaled_diameter);
+	cairo_text_extents_t extents;
+
+	gboolean is_tick = FALSE;
+
+	// Draw the circles and numbers inside them
 	for (i = 0; i < n_times; i++)
 	{
-		if (counter == (i + 1))
+		is_tick = (counter == (i + 1));
+
+		if (is_tick)
 			cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
 		else
 			cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
@@ -99,10 +110,31 @@ draw_counter_circle (GtkWidget *widget,
 		cairo_arc (cr,
 				x[i],
 				y,
-				width * 0.9 / (2 * (n_times + 1)),
+				scaled_radius,
 				0.0,
 				2 * M_PI);
 		cairo_fill (cr);
+
+		if (is_tick)
+		{
+			g_snprintf (text, sizeof (text), "%d", i + 1);
+			cairo_text_extents (cr, text, &extents);
+			cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+#if 0
+			cairo_rectangle (cr,
+					x[i] - extents.width / 2,
+					y - extents.height / 2,
+					extents.width,
+					extents.height);
+
+			cairo_fill (cr);
+#endif
+			cairo_move_to (cr,
+					x[i] - extents.x_bearing - extents.width / 2,
+					y + extents.height / 2);
+			// cairo_set_source_rgb (cr, 1.0, 0.0, 0.0);
+			cairo_show_text (cr, text);
+		}
 	}
 }
 
