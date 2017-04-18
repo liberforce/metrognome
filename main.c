@@ -165,17 +165,19 @@ on_click (gpointer user_data)
 	gtk_widget_queue_draw (gui->da);
 }
 
-void on_play_stop_button_clicked (G_GNUC_UNUSED GtkButton *button, gpointer user_data)
+void on_play_stop_button_clicked (GtkButton *button, gpointer user_data)
 {
 	MetronomeApp *app = user_data;
 
 	if (! metronome_is_running (app->metro))
 	{
 		metronome_start (app->metro, on_click, app);
+		gtk_button_set_label (button, "gtk-media-stop");
 	}
 	else
 	{
 		metronome_stop (app->metro);
+		gtk_button_set_label (button, "gtk-media-play");
 	}
 }
 
