@@ -5,10 +5,9 @@
 
 typedef struct
 {
+	GtkBuilder *builder;
 	GtkWidget *window;
 	GtkWidget *da;
-	GtkWidget *grid;
-	GtkWidget *bpm_label;
 	GtkWidget *bpm_spin;
 	GtkWidget *play_stop_button;
 } MetronomeGui;
@@ -190,36 +189,20 @@ MetronomeGui *
 create_gui (Metronome *metro)
 {
 	MetronomeGui *gui = g_new0 (MetronomeGui, 1);
+	GtkBuilder *builder = gtk_builder_new_from_file ("metrognome.ui");
+	gui->builder = builder;
+	g_assert (builder != NULL);
 
 	// Create widgets
-	gui->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	gui->grid = gtk_grid_new ();
-	gui->da = gtk_drawing_area_new ();
-	gui->bpm_label = gtk_label_new ("BPM:");
-	gui->bpm_spin = gtk_spin_button_new_with_range (1.0, 300.0, 1.0);
-	gui->play_stop_button = gtk_button_new_from_icon_name ("media-playback-start", GTK_ICON_SIZE_BUTTON);
-
-	// Build widget tree
-	gtk_container_add (GTK_CONTAINER (gui->window), gui->grid);
-	gtk_grid_attach (GTK_GRID (gui->grid), gui->bpm_label, 0, 0, 1, 1);
-	gtk_widget_set_valign (gui->bpm_label, GTK_ALIGN_START);
-	gtk_widget_set_halign (gui->bpm_label, GTK_ALIGN_END);
-	gtk_grid_attach (GTK_GRID (gui->grid), gui->bpm_spin, 1, 0, 1, 1);
-	gtk_widget_set_valign (gui->bpm_spin, GTK_ALIGN_START);
-	gtk_widget_set_halign (gui->bpm_spin, GTK_ALIGN_START);
-	gtk_grid_attach (GTK_GRID (gui->grid), gui->play_stop_button, 0, 1, 1, 1);
-	gtk_widget_set_valign (gui->play_stop_button, GTK_ALIGN_START);
-	gtk_widget_set_halign (gui->play_stop_button, GTK_ALIGN_FILL);
-	gtk_button_set_always_show_image (GTK_BUTTON (gui->play_stop_button), TRUE);
-	gtk_grid_attach (GTK_GRID (gui->grid), gui->da, 2, 0, 1, 2);
-	gtk_widget_set_hexpand (gui->da, TRUE);
-	gtk_widget_set_vexpand (gui->da, TRUE);
+	gui->window = GTK_WIDGET(gtk_builder_get_object (builder, "window"));
+	gui->da = GTK_WIDGET(gtk_builder_get_object (builder, "da"));
+	gui->bpm_spin = GTK_WIDGET(gtk_builder_get_object (builder, "bpm_spin"));
+	gui->play_stop_button = GTK_WIDGET(gtk_builder_get_object (builder, "play_stop_button"));
 
 	// Initialize widget content
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (gui->bpm_spin), metronome_get_bpm (metro));
 	
-	// Show UI and connect signals
-	gtk_window_set_default_size (GTK_WINDOW (gui->window), 600, 400);
+	// Show UI
 	gtk_widget_show_all (gui->window);
 
 	return gui;
@@ -235,13 +218,11 @@ int main (int argc, char **argv)
 	MetronomeGui *gui = create_gui (app->metro);
 	app->gui = gui;
 
-	if (gui != NULL)
-	{
-		g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
-		g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), app->metro);
-		g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), app);
-		g_signal_connect (gui->bpm_spin, "value-changed", G_CALLBACK (on_bpm_spin_value_changed), app);
-	}
+	// Connect signals
+	g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
+	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), app->metro);
+	g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), app);
+	g_signal_connect (gui->bpm_spin, "value-changed", G_CALLBACK (on_bpm_spin_value_changed), app);
 
 	gtk_main ();
 	return 0;
