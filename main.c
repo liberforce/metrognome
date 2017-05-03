@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <gst/gst.h>
 #include <math.h>
 
 #include "metronome.h"
@@ -21,6 +22,43 @@ typedef struct metronome_app
 void on_destroy (G_GNUC_UNUSED GtkWidget *widget, G_GNUC_UNUSED gpointer user_data)
 {
 	gtk_main_quit ();
+}
+
+
+static gboolean
+pipeline_stop (GstElement* pipeline)
+{
+	gst_element_set_state (pipeline, GST_STATE_PAUSED);
+	//g_object_unref (pipeline);
+
+	return FALSE;
+}
+
+static void
+play_sound (gdouble frequency)
+{
+	GstElement *source = NULL;
+	GstElement *sink = NULL;
+	GstElement *pipeline = NULL;
+	static gboolean is_initialized = FALSE;
+
+	if (! is_initialized)
+	{
+		pipeline = gst_pipeline_new ("note");
+		source   = gst_element_factory_make ("audiotestsrc", "source");
+		sink     = gst_element_factory_make ("autoaudiosink", "output");
+
+		/* set frequency */
+		g_object_set (source, "freq", frequency, NULL);
+
+		gst_bin_add_many (GST_BIN (pipeline), source, sink, NULL);
+		gst_element_link (source, sink);
+	}
+
+	gst_element_set_state (pipeline, GST_STATE_PLAYING);
+
+	/* stop it after 30ms */
+	g_timeout_add (30, (GSourceFunc) pipeline_stop, pipeline);
 }
 
 void
@@ -163,6 +201,8 @@ on_click (gpointer user_data)
 	// Display this click
 	g_print ("%d\n", metronome_get_counter (app->metro));
 	gtk_widget_queue_draw (gui->da);
+
+	play_sound(400.0);
 }
 
 void on_play_stop_button_clicked (GtkButton *button, gpointer user_data)
@@ -213,6 +253,7 @@ create_gui (Metronome *metro)
 int main (int argc, char **argv)
 {
 	gtk_init (&argc, &argv);
+	gst_init (&argc, &argv);
 
 	MetronomeApp *app = g_new0 (MetronomeApp, 1);
 	app->metro = metronome_new ();
