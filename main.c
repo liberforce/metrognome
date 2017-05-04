@@ -250,24 +250,36 @@ create_gui (Metronome *metro)
 	return gui;
 }
 
-int main (int argc, char **argv)
+void on_activate(GApplication *application, gpointer user_data)
 {
-	gtk_init (&argc, &argv);
-	gst_init (&argc, &argv);
-
 	MetronomeApp *app = g_new0 (MetronomeApp, 1);
 	app->metro = metronome_new ();
 
 	MetronomeGui *gui = create_gui (app->metro);
 	app->gui = gui;
 
+	gtk_application_add_window (GTK_APPLICATION(application),
+			GTK_WINDOW(gui->window));
+
 	// Connect signals
 	g_signal_connect (gui->window, "destroy", G_CALLBACK (on_destroy), NULL);
 	g_signal_connect (gui->da, "draw", G_CALLBACK (on_draw), app->metro);
 	g_signal_connect (gui->play_stop_button, "clicked", G_CALLBACK (on_play_stop_button_clicked), app);
 	g_signal_connect (gui->bpm_spin, "value-changed", G_CALLBACK (on_bpm_spin_value_changed), app);
+}
 
-	gtk_main ();
-	return 0;
+int main (int argc, char **argv)
+{
+	GtkApplication *app;
+	int status;
+
+	gst_init (&argc, &argv);
+	app = gtk_application_new ("org.gnome.metrognome",
+			G_APPLICATION_FLAGS_NONE);
+	g_signal_connect (app, "activate", G_CALLBACK(on_activate), NULL);
+	status = g_application_run(G_APPLICATION(app), argc, argv);
+	g_object_unref (app);
+
+	return status;
 }
 
