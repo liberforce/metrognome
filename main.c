@@ -250,7 +250,7 @@ create_gui (Metronome *metro)
 	return gui;
 }
 
-void on_activate(GApplication *application, gpointer user_data)
+void on_activate(GApplication *application, G_GNUC_UNUSED gpointer user_data)
 {
 	MetronomeApp *app = g_new0 (MetronomeApp, 1);
 	app->metro = metronome_new ();
