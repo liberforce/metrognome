@@ -1,7 +1,15 @@
+sudo: false
+
+# Otherwise 'python3-pip' won't be available
+# See https://stackoverflow.com/a/44853190/518853
+dist: "trusty" 
+
 language: c
 addons:
     apt:
         packages:
+        - python3
+        - python3-pip
         - libgtk-3-dev
         - libgstreamer1.0-dev
 
