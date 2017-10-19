@@ -2,6 +2,7 @@
 #include <gst/gst.h>
 #include <math.h>
 
+#include "config.h"
 #include "metronome.h"
 
 typedef struct
@@ -231,7 +232,7 @@ MetronomeGui *
 create_gui (Metronome *metro)
 {
 	MetronomeGui *gui = g_new0 (MetronomeGui, 1);
-	GtkBuilder *builder = gtk_builder_new_from_file ("metrognome.ui");
+	GtkBuilder *builder = gtk_builder_new_from_file (METROGNOME_DATADIR "/metrognome.ui");
 	gui->builder = builder;
 	g_assert (builder != NULL);
 
