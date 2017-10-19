@@ -4,9 +4,13 @@ addons:
         packages:
         - libgtk-3-dev
         - libgstreamer1.0-dev
-install: true
+
+install:
+    - pip3 install meson
+
 script:
-    - mkdir build
-    - cd build
-    - cmake ..
-    - make
+    - mkdir builddir
+    - meson builddir
+    - ninja -C builddir
+    - ninja -C builddir install
+    - ninja -C builddir test
