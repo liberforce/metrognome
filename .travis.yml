@@ -9,12 +9,5 @@ services:
 before_install:
     - docker pull liberforce/gtk3:mageia6
 
-.script:
-    - docker run liberforce/gtk3:mageia6 /bin/sh -c "ls"
-
 script:
-    - mkdir builddir
-    - meson builddir
-    - ninja -C builddir
-    - ninja -C builddir install
-    - ninja -C builddir test
+    - docker run liberforce/gtk3:mageia6 /bin/sh -c "pwd && mkdir builddir && meson builddir && ninja -C builddir && ninja -C builddir install"
