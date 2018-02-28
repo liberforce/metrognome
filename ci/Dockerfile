@@ -23,6 +23,5 @@ RUN pip3 install --upgrade pip \
     && pip3 install --user meson
 
 # Install development packages
-RUN sudo urpmi ninja
-#RUN urpmi gcc pkgconfig ninja
-#RUN urpmi libstdc++-devel lib64gtk+3.0-devel
+RUN sudo urpmi ninja gcc pkgconfig ninja libstdc++-devel lib64gtk+3.0-devel
+RUN sudo urpmi lib64gstreamer1.0-devel
