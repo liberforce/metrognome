@@ -10,4 +10,4 @@ before_install:
     - docker pull liberforce/gtk3:mageia6
 
 script:
-  - docker run -v $(pwd):/home/testuser/$(basename $(pwd)) liberforce/gtk3:mageia6 /bin/sh -c "cd metrognome && mkdir builddir && meson builddir && ninja -C builddir && ninja -C builddir install"
+  - docker run -v $(pwd):/home/testuser/$(basename $(pwd)) liberforce/gtk3:mageia6 /bin/sh -c "mkdir builddir && cd builddir && meson ../metrognome && ninja && ninja install"
